@@ -37,8 +37,7 @@ public class DeleteUserInfoJobConfig {
             ItemWriter<UserInfo> userInfoItemWriter
             ){
         return new StepBuilder("deleteUserInfoStep", jobRepository)
-                .<UserInfo, UserInfo>chunk(100 )
-                .transactionManager(transactionManager)
+                .<UserInfo, UserInfo>chunk(100, transactionManager)
                 .reader(userInfoItemReader)
                 .processor(userInfoItemProcessor)
                 .writer(userInfoItemWriter)
