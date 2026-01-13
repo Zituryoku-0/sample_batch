@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 public class DeleteUserInfoJobConfig {
 
     @Bean
-    public Job DeleteUserInfoJob(JobRepository jobRepository, Step deleteUserInfoStep) {
+    public Job deleteUserInfoJob(JobRepository jobRepository, Step deleteUserInfoStep) {
         return new JobBuilder("deleteUserInfoJob", jobRepository)
                 .start(deleteUserInfoStep)
                 .build();
@@ -37,7 +37,8 @@ public class DeleteUserInfoJobConfig {
             ItemWriter<UserInfo> userInfoItemWriter
             ){
         return new StepBuilder("deleteUserInfoStep", jobRepository)
-                .<UserInfo, UserInfo>chunk(100, transactionManager)
+                .<UserInfo, UserInfo>chunk(100)
+                .transactionManager(transactionManager)
                 .reader(userInfoItemReader)
                 .processor(userInfoItemProcessor)
                 .writer(userInfoItemWriter)

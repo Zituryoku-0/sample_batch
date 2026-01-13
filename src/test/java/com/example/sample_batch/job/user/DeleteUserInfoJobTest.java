@@ -47,7 +47,7 @@ class DeleteUserInfoJobTest {
     @Test
     void complete_delete_job() throws Exception {
         JobParameters params = new JobParametersBuilder()
-                .addLong("run id", System.currentTimeMillis()) // 毎回ユニークにする
+                .addLong("runId", System.currentTimeMillis()) // 毎回ユニークにする
                 .toJobParameters();
 
         JobExecution execution = jobOperatorTestUtils.startJob(params);
