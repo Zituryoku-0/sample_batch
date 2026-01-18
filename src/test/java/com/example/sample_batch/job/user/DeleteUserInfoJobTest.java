@@ -3,10 +3,10 @@ package com.example.sample_batch.job.user;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.job.parameters.JobParameters;
-import org.springframework.batch.core.job.parameters.JobParametersBuilder;
-import org.springframework.batch.test.JobOperatorTestUtils;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 class DeleteUserInfoJobTest {
 
     @Autowired
-    private JobOperatorTestUtils jobOperatorTestUtils;
+    private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
     private JobRepositoryTestUtils jobRepositoryTestUtils;
@@ -50,7 +50,7 @@ class DeleteUserInfoJobTest {
                 .addLong("runId", System.currentTimeMillis()) // 毎回ユニークにする
                 .toJobParameters();
 
-        JobExecution execution = jobOperatorTestUtils.startJob(params);
+        JobExecution execution = jobLauncherTestUtils.launchJob(params);
 
         assertThat(execution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
     }
