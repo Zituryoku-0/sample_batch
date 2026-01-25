@@ -16,6 +16,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.time.Clock;
+import java.time.LocalDateTime;
 
 @Configuration
 @RequiredArgsConstructor
@@ -47,10 +50,14 @@ public class DeleteUserInfoJobConfig {
     // --- Reader: 更新対象をDBから読む ---
     @Bean
     public ItemReader<UserInfo> userInfoItemReader(DataSource dataSource) {
+        // DB関数(DATEADD/INTERVAL)に依存せず、Java側で閾値を作ってバインドする。
+        Timestamp threshold = Timestamp.valueOf(LocalDateTime.now(Clock.systemDefaultZone()).minusYears(1));
+
         return new JdbcCursorItemReaderBuilder<UserInfo>()
                 .name("userInfoItemReader")
                 .dataSource(dataSource)
-                .sql("SELECT * FROM userinfo WHERE latest_access_time < DATEADD('YEAR', -1, NOW()) AND delete_flg = '0'")
+                .sql("SELECT * FROM userinfo WHERE latest_access_time < ? AND delete_flg = '0'")
+                .preparedStatementSetter(ps -> ps.setTimestamp(1, threshold))
                 .rowMapper((rs, rowNum) -> {
                     UserInfo userInfo = new UserInfo();
                     userInfo.setUserId(rs.getString("userid"));

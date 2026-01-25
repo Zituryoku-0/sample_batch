@@ -12,6 +12,7 @@ import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -19,6 +20,7 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
         "spring.batch.job.enabled=false" // テストの自動起動を止める
 })
 @SpringBatchTest
+@ActiveProfiles("test")
 class DeleteUserInfoJobTest {
 
     @Autowired
