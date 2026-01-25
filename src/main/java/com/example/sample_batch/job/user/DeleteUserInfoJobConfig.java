@@ -1,21 +1,24 @@
 package com.example.sample_batch.job.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.infrastructure.item.ItemProcessor;
-import org.springframework.batch.infrastructure.item.ItemReader;
-import org.springframework.batch.infrastructure.item.ItemWriter;
-import org.springframework.batch.infrastructure.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.infrastructure.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.time.Clock;
+import java.time.LocalDateTime;
 
 @Configuration
 @RequiredArgsConstructor
@@ -37,8 +40,7 @@ public class DeleteUserInfoJobConfig {
             ItemWriter<UserInfo> userInfoItemWriter
             ){
         return new StepBuilder("deleteUserInfoStep", jobRepository)
-                .<UserInfo, UserInfo>chunk(100)
-                .transactionManager(transactionManager)
+                .<UserInfo, UserInfo>chunk(100, transactionManager)
                 .reader(userInfoItemReader)
                 .processor(userInfoItemProcessor)
                 .writer(userInfoItemWriter)
@@ -48,10 +50,14 @@ public class DeleteUserInfoJobConfig {
     // --- Reader: 更新対象をDBから読む ---
     @Bean
     public ItemReader<UserInfo> userInfoItemReader(DataSource dataSource) {
+        // DB関数(DATEADD/INTERVAL)に依存せず、Java側で閾値を作ってバインドする。
+        Timestamp threshold = Timestamp.valueOf(LocalDateTime.now(Clock.systemDefaultZone()).minusYears(1));
+
         return new JdbcCursorItemReaderBuilder<UserInfo>()
                 .name("userInfoItemReader")
                 .dataSource(dataSource)
-                .sql("SELECT * FROM userinfo WHERE latest_access_time < DATEADD('YEAR', -1, NOW()) AND delete_flg = '0'")
+                .sql("SELECT * FROM userinfo WHERE latest_access_time < ? AND delete_flg = '0'")
+                .preparedStatementSetter(ps -> ps.setTimestamp(1, threshold))
                 .rowMapper((rs, rowNum) -> {
                     UserInfo userInfo = new UserInfo();
                     userInfo.setUserId(rs.getString("userid"));
